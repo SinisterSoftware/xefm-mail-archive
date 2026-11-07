@@ -1,4 +1,6 @@
 from email.message import EmailMessage
+import os
+from types import SimpleNamespace
 
 from mail_archive import logic
 
@@ -75,3 +77,68 @@ def test_schemes():
     assert logic.EML_SCHEME["class"] is logic.EmlPathImpl
     assert logic.MSG_SCHEME["class"] is logic.MsgPathImpl
     assert logic.MsgPathImpl.SCHEME == "msg"
+
+
+def test_open_mail_archive_routes_supported_files_and_ignores_others(tmp_path):
+    class Pane:
+        path = str(tmp_path)
+
+        def __init__(self):
+            self.visited = []
+
+        def cd(self, path):
+            self.visited.append(path)
+            self.path = path
+
+    pane = Pane()
+    ctx = SimpleNamespace(pane=pane)
+    eml = tmp_path / "mail.eml"
+    msg = tmp_path / "mail.msg"
+
+    assert logic.open_mail_archive(ctx, SimpleNamespace(path=eml)) is True
+    assert pane.path == f"eml://{eml.absolute()}#"
+    assert logic.open_mail_archive(ctx, SimpleNamespace(path=msg)) is True
+    assert pane.path == f"msg://{msg.absolute()}#"
+    assert logic.open_mail_archive(ctx, SimpleNamespace(path=tmp_path / "notes.txt")) is False
+    assert len(pane.visited) == 2
+
+
+def test_open_eml_is_idempotent_for_existing_external_viewer_hook(tmp_path):
+    eml = tmp_path / "mail.eml"
+    uri = f"eml://{eml.absolute()}#"
+
+    class Pane:
+        path = os.path.normcase(os.path.normpath(uri))
+
+        def cd(self, _path):
+            raise AssertionError("already-open archive should not be entered twice")
+
+    assert logic.open_eml(SimpleNamespace(pane=Pane()), eml) is True
+
+
+def test_open_focused_mail_archive_ignores_non_files_and_routes_mail(tmp_path):
+    class Pane:
+        path = str(tmp_path)
+
+        def __init__(self, focused):
+            self.focused = focused
+            self.visited = []
+
+        def cd(self, path):
+            self.visited.append(path)
+            self.path = path
+
+    eml = tmp_path / "focused.eml"
+    pane = Pane(SimpleNamespace(name=eml.name, is_dir=False, path=eml))
+    assert logic.open_focused_mail_archive(SimpleNamespace(pane=pane)) is True
+    assert pane.visited == [f"eml://{eml.absolute()}#"]
+
+    for focused in (
+        None,
+        SimpleNamespace(name="..", is_dir=True, path=tmp_path),
+        SimpleNamespace(name="folder", is_dir=True, path=tmp_path),
+        SimpleNamespace(name="notes.txt", is_dir=False, path=tmp_path / "notes.txt"),
+    ):
+        pane = Pane(focused)
+        assert logic.open_focused_mail_archive(SimpleNamespace(pane=pane)) is False
+        assert pane.visited == []

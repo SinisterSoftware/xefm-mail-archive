@@ -7,15 +7,15 @@ eml://<.emlの絶対パス>#  /  msg://<.msgの絶対パス>#  の中身:
     message.txt                      (.msg) ヘッダ・添付ファイル名の一覧・本文
     attach/                          添付ファイル
 
-.msg の読み取りには extract-msg が必要 (requirements.txt に記載。Sync Python Packages で導入)。
+.msg の読み取りには extract-msg が必要 (拡張の依存関係として導入)。
 
-config.py (パッケージ化後は不要。拡張の path_schemes が eml / msg を登録する):
+config.py (パッケージ化後は不要。拡張の path_schemes と file_open hook が登録する):
     from mail_archive import EmlPathImpl, MsgPathImpl
     PATH_SCHEMES = {
         'eml': {'class': EmlPathImpl, 'override': True},
         'msg': {'class': MsgPathImpl},
     }
-Enter での cd は external_viewer.py の EXTERNAL_VIEWERS が open_eml / open_msg を呼ぶ。
+open_eml / open_msg は External Viewers 設定からも利用できる互換用関数。
 """
 
 import email
@@ -268,8 +268,10 @@ class EmlPathImpl(ReadOnlyPathImpl):
 
 
 def open_eml(ctx, path):
-    """.eml を Enter したら仮想フォルダへ cd する。open_file() の分岐から呼ぶ。"""
-    ctx.pane.cd(f'eml://{path.absolute()}#')
+    """.eml を仮想フォルダとして開く。"""
+    uri = f'eml://{path.absolute()}#'
+    if _normalized_path(ctx.pane.path) != _normalized_path(uri):
+        ctx.pane.cd(uri)
     return True
 
 
@@ -355,10 +357,37 @@ class MsgPathImpl(EmlPathImpl):
 
 def open_msg(ctx, path):
     """.msg を Enter したら仮想フォルダへ cd する。"""
-    ctx.pane.cd(f"msg://{path.absolute()}#")
+    uri = f"msg://{path.absolute()}#"
+    if _normalized_path(ctx.pane.path) != _normalized_path(uri):
+        ctx.pane.cd(uri)
     return True
+
+
+def _normalized_path(path):
+    return os.path.normcase(os.path.normpath(str(path)))
+
+
+def _open_mail_archive(ctx, path):
+    suffix = path.suffix.lower()
+    if suffix == '.eml':
+        return open_eml(ctx, path)
+    if suffix == '.msg':
+        return open_msg(ctx, path)
+    return False
+
+
+def open_mail_archive(ctx, event):
+    """Open .eml and .msg files as virtual folders when entered in XeFM."""
+    return _open_mail_archive(ctx, event.path)
+
+
+def open_focused_mail_archive(ctx):
+    """Open the focused .eml or .msg file as a virtual folder."""
+    entry = ctx.pane.focused
+    if entry is None or entry.name == '..' or entry.is_dir:
+        return False
+    return _open_mail_archive(ctx, entry.path)
 
 
 EML_SCHEME = {"class": EmlPathImpl, "override": True}
 MSG_SCHEME = {"class": MsgPathImpl, "override": True}
-

@@ -11,5 +11,11 @@ updates = "github:SinisterSoftware/xefm-mail-archive"
 eml = "mail_archive.logic:EML_SCHEME"
 msg = "mail_archive.logic:MSG_SCHEME"
 
+[contributes.actions]
+"mail_archive.open" = "mail_archive.logic:open_focused_mail_archive"
+
+[contributes.event_hooks]
+file_open = "mail_archive.logic:open_mail_archive"
+
 [requires]
 python_packages = ["extract-msg"]
