@@ -1,6 +1,6 @@
 [extension]
 id = "mail-archive"
-version = "0.1.1"
+version = "0.1.2"
 api_version = 1
 name = "Mail Archive"
 description = "Browse .eml and .msg files read-only as virtual folders (headers, body, attachments)."
