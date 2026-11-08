@@ -1,5 +1,7 @@
 # Mail Archive
 
+[日本語の説明はこちら](README.ja.md)。
+
 XeFM extension to browse `.eml` and `.msg` files read-only as virtual folders.
 
 Install with `xefm ext install github:SinisterSoftware/xefm-mail-archive`.
