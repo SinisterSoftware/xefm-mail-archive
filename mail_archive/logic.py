@@ -9,7 +9,7 @@ eml://<.emlの絶対パス>#  /  msg://<.msgの絶対パス>#  の中身:
 
 .msg の読み取りには extract-msg が必要 (拡張の依存関係として導入)。
 
-config.py (パッケージ化後は不要。拡張の path_schemes と file_open hook が登録する):
+config.py (パッケージ化後は不要。拡張が path_schemes を登録する):
     from mail_archive import EmlPathImpl, MsgPathImpl
     PATH_SCHEMES = {
         'eml': {'class': EmlPathImpl, 'override': True},

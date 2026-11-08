@@ -6,8 +6,11 @@ XeFM extension to browse `.eml` and `.msg` files read-only as virtual folders.
 
 Install with `xefm ext install github:SinisterSoftware/xefm-mail-archive`.
 
-After installation, press Enter on an `.eml` or `.msg` file to open its
-read-only virtual folder; this works without configuring External Viewers.
+Run the `mail_archive.open` action on a focused `.eml` or `.msg` file to open
+its read-only virtual folder. With an external-viewer extension that routes
+declined mail files to this action, pressing Enter can open them as well.
+This extension does not register its own `file_open` hook.
+
 You can also open a mail archive directly with XeFM's **Jump to Path** action
 (`Ctrl+L` in the OS-native keymap, `Shift+J` in AFX, or `g p` in Vim style):
 
