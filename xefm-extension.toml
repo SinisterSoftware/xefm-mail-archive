@@ -1,6 +1,6 @@
 [extension]
 id = "mail-archive"
-version = "0.1.2"
+version = "0.1.3"
 api_version = 1
 name = "Mail Archive"
 description = "Browse .eml and .msg files read-only as virtual folders (headers, body, attachments)."
@@ -13,9 +13,6 @@ msg = "mail_archive.logic:MSG_SCHEME"
 
 [contributes.actions]
 "mail_archive.open" = "mail_archive.logic:open_focused_mail_archive"
-
-[contributes.event_hooks]
-file_open = "mail_archive.logic:open_mail_archive"
 
 [requires]
 python_packages = ["extract-msg"]
